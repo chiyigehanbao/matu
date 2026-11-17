@@ -6,6 +6,15 @@
 
 项目使用 JavaScript、HTML、CSS 实现课程界面，通过 Capacitor 接入 Android 工程。课程内容随应用提供，学习进度保存在当前设备，既能在浏览器预览，也能作为 Android 应用打包。
 
+## 界面预览
+
+<p>
+  <img src="docs/images/overview.png" width="280" alt="项目界面">
+  <img src="docs/images/detail.png" width="280" alt="功能界面">
+</p>
+
+本地浏览器截图，展示首页与课程阅读页。
+
 ## 一次学习是怎样进行的
 
 1. **选一条路线**：从 Python、网页、数据库或移动开发等方向进入，按章节逐步阅读。

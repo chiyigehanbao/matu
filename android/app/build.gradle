@@ -1,0 +1,76 @@
+apply plugin: 'com.android.application'
+
+def signingMode = System.getenv('CODELINGO_SIGNING_MODE') ?: 'test'
+if (!(signingMode in ['test', 'production'])) {
+    throw new GradleException('CODELINGO_SIGNING_MODE must be test or production')
+}
+def productionKeys = ['CODELINGO_STORE_FILE', 'CODELINGO_STORE_PASSWORD', 'CODELINGO_KEY_ALIAS', 'CODELINGO_KEY_PASSWORD']
+if (signingMode == 'production') {
+    def missing = productionKeys.findAll { !System.getenv(it) }
+    if (!missing.isEmpty()) throw new GradleException('Missing production signing configuration: ' + missing.join(', '))
+    def candidate = file(System.getenv('CODELINGO_STORE_FILE'))
+    if (!candidate.isFile()) throw new GradleException('Production signing keystore does not exist')
+    if (candidate.canonicalFile == file('codelingo-release.keystore').canonicalFile) throw new GradleException('The demo keystore cannot be used for production')
+}
+
+android {
+    namespace = "com.codelingo.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.codelingo.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 3
+        versionName "1.0.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        release {
+            storeFile file(signingMode == 'production' ? System.getenv('CODELINGO_STORE_FILE') : 'codelingo-release.keystore')
+            storePassword signingMode == 'production' ? System.getenv('CODELINGO_STORE_PASSWORD') : 'codelingo2026'
+            keyAlias signingMode == 'production' ? System.getenv('CODELINGO_KEY_ALIAS') : 'codelingo'
+            keyPassword signingMode == 'production' ? System.getenv('CODELINGO_KEY_PASSWORD') : 'codelingo2026'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

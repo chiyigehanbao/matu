@@ -1,0 +1,14 @@
+{
+  "appId": "com.codelingo.app",
+  "appName": "码途",
+  "webDir": "matu-web",
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": false
+    }
+  }
+}
